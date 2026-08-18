@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STX EDGE — Trading Calculator</title>
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-main: #0B0E14;
+    --bg-card: #151921;
+    --bg-input: #1C222D;
+    --border-color: #2A3241;
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+    --buy-color: #10B981;
+    --buy-bg: rgba(16, 185, 129, 0.08);
+    --sell-color: #EF4444;
+    --sell-bg: rgba(239, 68, 68, 0.08);
+    --accent-cyan: #38BDF8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* Desktop (16:9 Layout) */
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: 20px;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 1280px;
+    height: 100%;
+    max-height: 750px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-badge {
+    background: linear-gradient(135deg, #38BDF8, #818CF8);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    letter-spacing: 1px;
+  }
+
+  .brand-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .sub-title {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  /* Layout Body */
+  .main-content {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Left Panel: Inputs */
+  .input-panel {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .input-group input:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  }
+
+  .calc-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #38BDF8, #3B82F6);
+    color: #000;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  .calc-btn:hover { opacity: 0.95; }
+  .calc-btn:active { transform: scale(0.98); }
+
+  /* Stats Box */
+  .stats-box {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 16px;
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+  }
+
+  .stats-row .lbl { color: var(--text-secondary); }
+  .stats-row .val { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent-cyan); }
+
+  /* Right Panel: Signals Area */
+  .signals-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .signal-card {
+    background: var(--bg-main);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+  }
+
+  .signal-card.buy { border-top: 4px solid var(--buy-color); background: linear-gradient(180deg, var(--buy-bg) 0%, var(--bg-main) 40%); }
+  .signal-card.sell { border-top: 4px solid var(--sell-color); background: linear-gradient(180deg, var(--sell-bg) 0%, var(--bg-main) 40%); }
+
+  .signal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .signal-title {
+    font-size: 20px;
+    font-weight: 800;
+  }
+
+  .buy .signal-title { color: var(--buy-color); }
+  .sell .signal-title { color: var(--sell-color); }
+
+  .signal-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .data-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  .data-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .data-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  /* Telegram Copy Main Button */
+  .tg-copy-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .buy .tg-copy-btn {
+    background: var(--buy-color);
+    color: #000;
+  }
+
+  .sell .tg-copy-btn {
+    background: var(--sell-color);
+    color: #fff;
+  }
+
+  .tg-copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+
+  .error {
+    color: #F87171;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--accent-cyan);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 1000;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Mobil Moslashuvchanlik */
+  @media (max-width: 900px) {
+    body {
+      overflow-y: auto;
+      height: auto;
+      padding: 12px;
+    }
+
+    .app-container {
+      max-height: none;
+      height: auto;
+      padding: 16px;
+    }
+
+    .main-content {
+      grid-template-columns: 1fr;
+    }
+
+    .signals-panel {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top Bar -->
+  <div class="header">
+    <div class="brand">
+      <span class="brand-badge">STX EDGE</span>
+      <span class="brand-title">Trading Calculator</span>
+    </div>
+    <div class="sub-title">BUY / SELL signalni teskari hisoblash</div>
+  </div>
+
+  <div class="main-content">
+    <!-- Left Input Panel -->
+    <div class="input-panel">
+      <div>
+        <div class="input-group">
+          <label for="p1">1-qiymat (P1)</label>
+          <input id="p1" type="number" step="0.0001" value="4391.63">
+        </div>
+
+        <div class="input-group">
+          <label for="p2">2-qiymat (P2)</label>
+          <input id="p2" type="number" step="0.0001" value="4386.17">
+        </div>
+
+        <div id="error" class="error hidden"></div>
+
+        <button class="calc-btn" onclick="calculate()">Hisoblash</button>
+      </div>
+
+      <!-- General Stats Box -->
+      <div id="statsBox" class="stats-box hidden">
+        <div class="stats-row">
+          <span class="lbl">Masofa (Risk):</span>
+          <span class="val" id="distance">--</span>
+        </div>
+        <div class="stats-row">
+          <span class="lbl">Point:</span>
+          <span class="val" id="points">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Output Panel (BUY & SELL Signals) -->
+    <div id="results" class="signals-panel hidden">
+      
+      <!-- BUY Card -->
+      <div class="signal-card buy">
+        <div class="signal-header">
+          <div class="signal-title">🟢 BUY SIGNAL</div>
+        </div>
+        <div class="signal-rows">
+          <div class="data-row">
+            <span class="data-label">Entry</span>
+            <span class="data-value" id="buyEntry"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Stop Loss</span>
+            <span class="data-value" id="buySL"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP1 (1:3 RR)</span>
+            <span class="data-value" id="buyTP1"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP2 (1:5 RR)</span>
+            <span class="data-value" id="buyTP2"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP3 (1:10 RR)</span>
+            <span class="data-value" id="buyTP3"></span>
+          </div>
+        </div>
+
+        <!-- Telegram Copy Button -->
+        <button class="tg-copy-btn" onclick="copyTelegramSignal('BUY')">
+          ✈️ Telegram uchun signalni nusxalash
+        </button>
+      </div>
+
+      <!-- SELL Card -->
+      <div class="signal-card sell">
+        <div class="signal-header">
+          <div class="signal-title">🔴 SELL SIGNAL</div>
+        </div>
+        <div class="signal-rows">
+          <div class="data-row">
+            <span class="data-label">Entry</span>
+            <span class="data-value" id="sellEntry"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Stop Loss</span>
+            <span class="data-value" id="sellSL"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP1 (1:3 RR)</span>
+            <span class="data-value" id="sellTP1"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP2 (1:5 RR)</span>
+            <span class="data-value" id="sellTP2"></span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">TP3 (1:10 RR)</span>
+            <span class="data-value" id="sellTP3"></span>
+          </div>
+        </div>
+
+        <!-- Telegram Copy Button -->
+        <button class="tg-copy-btn" onclick="copyTelegramSignal('SELL')">
+          ✈️ Telegram uchun signalni nusxalash
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">Telegram signal nusxalandi!</div>
+
+<script>
+function fmt(n) {
+  return n.toFixed(4);
+}
+
+function calculate() {
+  const p1 = parseFloat(document.getElementById('p1').value);
+  const p2 = parseFloat(document.getElementById('p2').value);
+  const error = document.getElementById('error');
+  const results = document.getElementById('results');
+  const statsBox = document.getElementById('statsBox');
+
+  if (!Number.isFinite(p1) || !Number.isFinite(p2) || p1 === p2) {
+    error.textContent = "Iltimos, ikkita turli qiymat kiriting.";
+    error.classList.remove('hidden');
+    results.classList.add('hidden');
+    statsBox.classList.add('hidden');
+    return;
+  }
+
+  error.classList.add('hidden');
+
+  const D = Math.round((p1 - p2) / 0.001);
+  const O = D * 0.20;
+  const offset = O * 0.001;
+
+  const buyEntry = p2 + offset;
+  const buySL = p2 - offset;
+  const buyRisk = Math.abs(buyEntry - buySL);
+
+  const sellEntry = p1 - offset;
+  const sellSL = p1 + offset;
+  const sellRisk = Math.abs(sellEntry - sellSL);
+
+  const buyTP1 = buyEntry + buyRisk * 3;
+  const buyTP2 = buyEntry + buyRisk * 5;
+  const buyTP3 = buyEntry + buyRisk * 10;
+
+  const sellTP1 = sellEntry - sellRisk * 3;
+  const sellTP2 = sellEntry - sellRisk * 5;
+  const sellTP3 = sellEntry - sellRisk * 10;
+
+  document.getElementById('buyEntry').textContent = fmt(buyEntry);
+  document.getElementById('buySL').textContent = fmt(buySL);
+  document.getElementById('buyTP1').textContent = fmt(buyTP1);
+  document.getElementById('buyTP2').textContent = fmt(buyTP2);
+  document.getElementById('buyTP3').textContent = fmt(buyTP3);
+
+  document.getElementById('sellEntry').textContent = fmt(sellEntry);
+  document.getElementById('sellSL').textContent = fmt(sellSL);
+  document.getElementById('sellTP1').textContent = fmt(sellTP1);
+  document.getElementById('sellTP2').textContent = fmt(sellTP2);
+  document.getElementById('sellTP3').textContent = fmt(sellTP3);
+
+  document.getElementById('distance').textContent = fmt(buyRisk);
+  document.getElementById('points').textContent = Math.round(buyRisk / 0.001) + " point";
+
+  results.classList.remove('hidden');
+  statsBox.classList.remove('hidden');
+}
+
+// Telegram uchun to'liq signal matnini nusxalash funksiyasi
+function copyTelegramSignal(type) {
+  const distance = document.getElementById('distance').textContent;
+  const points = document.getElementById('points').textContent;
+
+  let text = "";
+
+  if (type === 'BUY') {
+    const entry = document.getElementById('buyEntry').textContent;
+    const sl = document.getElementById('buySL').textContent;
+    const tp1 = document.getElementById('buyTP1').textContent;
+    const tp2 = document.getElementById('buyTP2').textContent;
+    const tp3 = document.getElementById('buyTP3').textContent;
+
+    text = `🟢 BUY SIGNAL | STX EDGE\n\n` +
+           `📍 Entry: ${entry}\n` +
+           `🚫 Stop Loss: ${sl}\n\n` +
+           `🎯 TP1 (1:3): ${tp1}\n` +
+           `🎯 TP2 (1:5): ${tp2}\n` +
+           `🎯 TP3 (1:10): ${tp3}\n\n` +
+           `📊 Risk: ${distance} | ${points}`;
+  } else {
+    const entry = document.getElementById('sellEntry').textContent;
+    const sl = document.getElementById('sellSL').textContent;
+    const tp1 = document.getElementById('sellTP1').textContent;
+    const tp2 = document.getElementById('sellTP2').textContent;
+    const tp3 = document.getElementById('sellTP3').textContent;
+
+    text = `🔴 SELL SIGNAL | STX EDGE\n\n` +
+           `📍 Entry: ${entry}\n` +
+           `🚫 Stop Loss: ${sl}\n\n` +
+           `🎯 TP1 (1:3): ${tp1}\n` +
+           `🎯 TP2 (1:5): ${tp2}\n` +
+           `🎯 TP3 (1:10): ${tp3}\n\n` +
+           `📊 Risk: ${distance} | ${points}`;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`${type} formati Telegram uchun nusxalandi!`);
+  });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2000);
+}
+
+calculate();
+</script>
+</body>
+</html>
